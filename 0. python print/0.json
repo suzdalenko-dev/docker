@@ -1,3 +1,40 @@
+sudo apt update
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable --now docker
+docker --version
+docker compose version
+
+##################################
+docker run hello-world         run = crear + ejecutar
+docker ps -a                   “Muéstrame los contenedores” No imágenes, contenedores. Mira la base enterna /var/lib/docker/containers/
+docker ps                      Solo muestra contenedores EN EJECUCIÓN
+docker stop
+docker rm container_id
+
+
+
+
+
+mkdir -p curso-docker/01-python
+cd curso-docker/01-python
+    nano app.py > print("Hola desde Docker (Python)")
+    nano Dockerfile
+        >   FROM python:3.12-slim           👉 “Quiero una imagen que ya tenga Python instalado”
+            WORKDIR /app                    👉 Dentro del contenedor, crea y usa la carpeta /app
+            COPY app.py .                   👉 Copia app.py desde TU PC → dentro del contenedor (/app)
+            CMD ["python", "app.py"]        👉 Cuando el contenedor arranque:   python app.py
+
+docker build -t python-print .              Construir la imagen Docker
+docker run --rm python-print                Crea, ejecuta y borra el contenedor
+
+
+docker images                               Ver imagenes
+docker rmi "nombre imagen"                  Borrar..
+
+
+
+
+
 sudo apt install docker.io
 sudo apt install docker-compose
 sudo groupadd docker

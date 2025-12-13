@@ -69,3 +69,13 @@ services:
 
 volumes:
   pgdata:
+
+
+
+
+🟢 PASO 6 — Arrancar TODO
+docker compose up -d
+
+
+🟢 PASO 7 — Verificar que todo funciona
+http://localhost:8080
