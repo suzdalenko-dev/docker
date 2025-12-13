@@ -1,0 +1,29 @@
+sudo apt install docker.io
+sudo apt install docker-compose
+sudo groupadd docker
+sudo usermod -aG docker $USER
+
+mkdir 01-python
+cd 01-python
+nano app.py 
+    > print("hello from python updated", flush=True)
+nano Dockerfile
+    >   FROM python:3.12-slim
+        WORKDIR /app
+        COPY app.py .
+        CMD ["python", "app.py"]
+
+docker build -t python-hello .
+docker images
+docker run python-hello
+docker ps -a
+docker start -a "container id"
+
+
+
+
+
+import time
+while True:
+    print('hello')
+    time.sleep(2)

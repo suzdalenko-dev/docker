@@ -1,0 +1,44 @@
+mkdir apache-html
+cd apache-html
+
+nano index.html
+    > <h1>Hola desde Apache en Docker!</h1>
+
+Dockerfile
+    >   # Usamos la imagen oficial de Apache
+        FROM httpd:2.4
+        # Copiamos nuestro HTML a la carpeta que Apache sirve por defecto
+        COPY index.html /usr/local/apache2/htdocs/
+        # Exponemos el puerto 80 (interno del contenedor)
+        EXPOSE 80
+
+docker build -t apache-html .
+
+docker run -d -p 8181:80 --name apache-container --restart unless-stopped apache-html
+
+http://localhost:8181
+
+
+
+
+
+
+
+Opciones para modificacion en linea:
+1️⃣ Volúmenes definidos en docker run (modo desarrollo)
+docker run -d -p 8181:80 --name apache-container --restart always -v $(pwd):/usr/local/apache2/htdocs/ apache-html
+
+2️⃣ Docker Compose
+Profesionales suelen usar Docker Compose, donde puedes definir el contenedor y el volumen en un archivo docker-compose.yml:
+version: '3'
+services:
+  apache:
+    image: apache-html
+    ports:
+      - "8181:80"
+    volumes:
+      - ./apache-html:/usr/local/apache2/htdocs/
+    restart: unless-stopped
+
+docker-compose up -d
+

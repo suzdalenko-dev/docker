@@ -1,0 +1,71 @@
+mi-app/
+├── frontend/        ← HTML / CSS / JS (HOST)
+├── backend/         ← Laravel (HOST)
+├── docker/
+│   └── php/         ← Dockerfile PHP
+└── docker-compose.yml
+
+🟢 PASO 1 — Crear la carpeta del proyecto (HOST)
+mkdir mi-app
+cd mi-app
+
+
+🟢 PASO 2 — Crear el FRONTEND (HOST) desde mi-app
+mkdir frontend
+nano frontend/index.html
+    >  <h1>Hola desde el Frontend</h1>
+
+
+🟢 PASO 3 — Crear el BACKEND Laravel (HOST) desde mi-app
+mkdir backend
+
+docker run --rm -it -v $(pwd)/backend:/app composer create-project laravel/laravel .
+
+
+🟢 PASO 4 — Crear Dockerfile para PHP (ENTORNO)
+mkdir -p docker/php
+nano docker/php/Dockerfile
+    >   FROM php:8.3-fpm
+
+        RUN apt-get update && apt-get install -y \
+            libpq-dev \
+            unzip \
+            git \
+            curl \
+            && docker-php-ext-install pdo pdo_pgsql
+
+        WORKDIR /var/www/html
+
+
+🟢 PASO 5 — Crear docker-compose.yml (ORQUESTADOR)
+nano docker-compose.yml
+
+version: "3.9"
+
+services:
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+
+  backend:
+    build: ./docker/php
+    volumes:
+      - ./backend:/var/www/html
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
