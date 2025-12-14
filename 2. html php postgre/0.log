@@ -3,6 +3,7 @@ mi-app/
 ├── backend/         ← Laravel (HOST)
 ├── docker/
 │   └── php/         ← Dockerfile PHP
+        nginx/default.conf
 └── docker-compose.yml
 
 🟢 PASO 1 — Crear la carpeta del proyecto (HOST)
@@ -27,14 +28,41 @@ mkdir -p docker/php
 nano docker/php/Dockerfile
     >   FROM php:8.3-fpm
 
+        # Instalar dependencias necesarias para Laravel + PostgreSQL
         RUN apt-get update && apt-get install -y \
-            libpq-dev \
-            unzip \
-            git \
-            curl \
-            && docker-php-ext-install pdo pdo_pgsql
+          libpq-dev \
+          unzip \
+          git \
+          curl \
+         supervisor \
+        && docker-php-ext-install pdo pdo_pgsql
 
         WORKDIR /var/www/html
+
+
+
+4.5 docker/nginx/default.conf
+server {
+    listen 80;
+    server_name localhost;
+
+    root /var/www/html/public;
+
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass backend:9000;  # Se conecta al contenedor PHP-FPM
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+
+
 
 
 🟢 PASO 5 — Crear docker-compose.yml (ORQUESTADOR)
@@ -43,20 +71,37 @@ nano docker-compose.yml
 version: "3.9"
 
 services:
+  # Frontend HTML/JS/CSS
   frontend:
     image: nginx:alpine
     ports:
-      - "8080:80"
+      - "8080:80"                  # Host localhost:8080 → contenedor 80
     volumes:
       - ./frontend:/usr/share/nginx/html
-    restart: unless-stopped
+    restart: always
 
+  # Backend Laravel + PHP-FPM
   backend:
-    build: ./docker/php
+    build: ./docker/php             # Dockerfile con PHP-FPM
+    volumes:
+      - ./backend:/var/www/html     # Código Laravel montado desde host
+    expose:
+      - "9000"                      # Solo accesible desde otros contenedores (Nginx)
+    restart: always
+
+  # Nginx para Laravel
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8000:80"                   # Host localhost:8000 → contenedor Nginx
     volumes:
       - ./backend:/var/www/html
-    restart: unless-stopped
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    restart: always
 
+  # Base de datos PostgreSQL
   db:
     image: postgres:16
     environment:
@@ -65,7 +110,7 @@ services:
       POSTGRES_PASSWORD: secret
     volumes:
       - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
 
 volumes:
   pgdata:
@@ -73,8 +118,9 @@ volumes:
 
 
 
+
 🟢 PASO 6 — Arrancar TODO
-docker compose up -d
+docker-compose up -d
 
 
 🟢 PASO 7 — Verificar que todo funciona
